@@ -71,7 +71,7 @@ impl Page {
         self.offset_range().start
     }
 
-    pub(crate) fn offset_range(&self) -> Range<usize> {
+    pub fn offset_range(&self) -> Range<usize> {
         let start = (self.curr_page().get() - 1) * self.limit_value().get();
         let end = min(
             self.curr_page().get() * self.limit_value().get(),
@@ -85,7 +85,7 @@ impl Page {
 #[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct SlicePage<'a, T> {
-    items: &'a [T],
+    all_items: &'a [T],
     pub page: Page,
 }
 
@@ -98,11 +98,11 @@ impl<'a, T> Deref for SlicePage<'a, T> {
 }
 
 impl<'a, T> SlicePage<'a, T> {
-    pub(crate) fn new(items: &'a [T], page: Page) -> Self {
-        Self { items, page }
+    pub(crate) fn new(all_items: &'a [T], page: Page) -> Self {
+        Self { all_items, page }
     }
 
     pub fn items(&self) -> &'a [T] {
-        &self.items[self.offset_range()]
+        &self.all_items[self.offset_range()]
     }
 }

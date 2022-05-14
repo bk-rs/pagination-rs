@@ -14,7 +14,9 @@ pub struct Paginator {
 }
 
 impl Paginator {
-    pub fn new(total_count: usize, per_page: Option<usize>) -> Self {
+    pub fn new(total_count: usize, per_page: impl Into<Option<usize>>) -> Self {
+        let per_page = per_page.into();
+
         Self {
             total_count,
             per_page: per_page.and_then(NonZeroUsize::new),
@@ -54,7 +56,7 @@ impl Paginator {
 #[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct SlicePaginator<'a, T> {
-    items: &'a [T],
+    all_items: &'a [T],
     pub paginator: Paginator,
 }
 
@@ -67,16 +69,18 @@ impl<'a, T> Deref for SlicePaginator<'a, T> {
 }
 
 impl<'a, T> SlicePaginator<'a, T> {
-    pub fn new(items: &'a [T], per_page: Option<usize>) -> Self {
+    pub fn new(all_items: &'a [T], per_page: impl Into<Option<usize>>) -> Self {
+        let per_page = per_page.into();
+
         Self {
-            items,
-            paginator: Paginator::new(items.len(), per_page),
+            all_items,
+            paginator: Paginator::new(all_items.len(), per_page),
         }
     }
 
     pub fn page(&self, n: usize) -> Option<SlicePage<'a, T>> {
         self.paginator
             .page(n)
-            .map(|x| SlicePage::new(self.items, x))
+            .map(|x| SlicePage::new(self.all_items, x))
     }
 }

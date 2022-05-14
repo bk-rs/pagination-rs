@@ -6,6 +6,9 @@ pub use page::{Page, SlicePage};
 pub use paginator::{Paginator, SlicePaginator};
 
 //
-pub fn paginate_slice<T>(items: &[T], per_page: Option<usize>) -> SlicePaginator<'_, T> {
-    SlicePaginator::new(items, per_page)
+pub fn paginate_slice<T>(
+    all_items: &[T],
+    per_page: impl Into<Option<usize>>,
+) -> SlicePaginator<'_, T> {
+    SlicePaginator::new(all_items, per_page)
 }
