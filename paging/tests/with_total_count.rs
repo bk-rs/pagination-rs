@@ -1,6 +1,6 @@
 // https://github.com/kaminari/kaminari/blob/master/kaminari-core/test/models/array_test.rb
 
-use paging::Paginator;
+use paging::paginate;
 
 //
 const TOTAL_COUNT: usize = 100;
@@ -10,17 +10,17 @@ const TOTAL_COUNT: usize = 100;
 #[test]
 fn test_total_pages() {
     // per 25 (default)
-    assert_eq!(Paginator::new(TOTAL_COUNT, None).total_pages(), 4);
+    assert_eq!(paginate(TOTAL_COUNT, None).total_pages(), 4);
 
     // per 7
-    assert_eq!(Paginator::new(TOTAL_COUNT, 7).total_pages(), 15);
+    assert_eq!(paginate(TOTAL_COUNT, 7).total_pages(), 15);
 
     // per 65536
-    assert_eq!(Paginator::new(TOTAL_COUNT, 65536).total_pages(), 1);
+    assert_eq!(paginate(TOTAL_COUNT, 65536).total_pages(), 1);
 
     // per 0
     // Eq per 25 (default)
-    assert_eq!(Paginator::new(TOTAL_COUNT, 0).total_pages(), 4);
+    assert_eq!(paginate(TOTAL_COUNT, 0).total_pages(), 4);
 }
 
 //
@@ -29,7 +29,7 @@ fn test_total_pages() {
 fn test_next_page() {
     // page 1
     assert_eq!(
-        Paginator::new(TOTAL_COUNT, None)
+        paginate(TOTAL_COUNT, None)
             .page(1)
             .unwrap()
             .next_page()
@@ -38,10 +38,7 @@ fn test_next_page() {
     );
 
     assert_eq!(
-        Paginator::new(TOTAL_COUNT, None)
-            .page(4)
-            .unwrap()
-            .next_page(),
+        paginate(TOTAL_COUNT, None).page(4).unwrap().next_page(),
         None
     );
 }
@@ -52,16 +49,13 @@ fn test_next_page() {
 fn test_prev_page() {
     // page 1
     assert_eq!(
-        Paginator::new(TOTAL_COUNT, None)
-            .page(1)
-            .unwrap()
-            .prev_page(),
+        paginate(TOTAL_COUNT, None).page(1).unwrap().prev_page(),
         None
     );
 
     // page 3
     assert_eq!(
-        Paginator::new(TOTAL_COUNT, None)
+        paginate(TOTAL_COUNT, None)
             .page(3)
             .unwrap()
             .prev_page()
@@ -70,7 +64,7 @@ fn test_prev_page() {
     );
 
     assert_eq!(
-        Paginator::new(TOTAL_COUNT, None)
+        paginate(TOTAL_COUNT, None)
             .page(4)
             .unwrap()
             .prev_page()

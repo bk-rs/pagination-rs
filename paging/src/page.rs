@@ -11,27 +11,27 @@ pub const FIRST_PAGE: usize = 1;
 #[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct Page {
-    curr_page: NonZeroUsize,
-    //
     total_count: usize,
     per_page: NonZeroUsize,
     total_pages: usize,
+    //
+    curr_page: NonZeroUsize,
 }
 
 impl Page {
     pub(crate) fn new(
-        curr_page: NonZeroUsize,
-        //
         total_count: usize,
         per_page: NonZeroUsize,
         total_pages: usize,
+        //
+        curr_page: NonZeroUsize,
     ) -> Self {
         Self {
-            curr_page,
-            //
             total_count,
             per_page,
             total_pages,
+            //
+            curr_page,
         }
     }
 

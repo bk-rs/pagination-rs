@@ -1,6 +1,9 @@
 use core::{num::NonZeroUsize, ops::Deref};
 
-use crate::page::{Page, SlicePage, FIRST_PAGE};
+use crate::{
+    page::{Page, SlicePage, FIRST_PAGE},
+    pages::Pages,
+};
 
 //
 pub const DEFAULT_PER_PAGE: usize = 25;
@@ -44,11 +47,15 @@ impl Paginator {
         }
 
         Some(Page::new(
-            curr_page,
             self.total_count,
             self.per_page(),
             total_pages,
+            curr_page,
         ))
+    }
+
+    pub fn pages(&self) -> Pages {
+        Pages::new(self.total_count, self.per_page(), self.total_pages())
     }
 }
 
