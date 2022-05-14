@@ -8,7 +8,7 @@ use core::{
 pub const FIRST_PAGE: usize = 1;
 
 //
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct Page {
     curr_page: NonZeroUsize,
@@ -17,6 +17,7 @@ pub struct Page {
     per_page: NonZeroUsize,
     total_pages: usize,
 }
+
 impl Page {
     pub(crate) fn new(
         curr_page: NonZeroUsize,
@@ -81,7 +82,7 @@ impl Page {
 }
 
 //
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct SlicePage<'a, T> {
     items: &'a [T],

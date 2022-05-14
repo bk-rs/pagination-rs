@@ -6,7 +6,7 @@ use crate::page::{Page, SlicePage, FIRST_PAGE};
 pub const DEFAULT_PER_PAGE: usize = 25;
 
 //
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct Paginator {
     pub total_count: usize,
@@ -51,7 +51,7 @@ impl Paginator {
 }
 
 //
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct SlicePaginator<'a, T> {
     items: &'a [T],
