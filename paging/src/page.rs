@@ -1,4 +1,8 @@
-use core::{cmp::min, num::NonZeroUsize, ops::Deref};
+use core::{
+    cmp::min,
+    num::NonZeroUsize,
+    ops::{Deref, Range},
+};
 
 //
 pub const FIRST_PAGE: usize = 1;
@@ -63,18 +67,16 @@ impl Page {
     }
 
     pub fn offset_value(&self) -> usize {
-        self.offset_begin()
+        self.offset_range().start
     }
 
-    pub(crate) fn offset_begin(&self) -> usize {
-        (self.curr_page().get() - 1) * self.limit_value().get()
-    }
-
-    pub(crate) fn offset_end(&self) -> usize {
-        min(
+    pub(crate) fn offset_range(&self) -> Range<usize> {
+        let start = (self.curr_page().get() - 1) * self.limit_value().get();
+        let end = min(
             self.curr_page().get() * self.limit_value().get(),
             self.total_count,
-        )
+        );
+        Range { start, end }
     }
 }
 
@@ -100,6 +102,6 @@ impl<'a, T> SlicePage<'a, T> {
     }
 
     pub fn items(&self) -> &'a [T] {
-        &self.items[self.offset_begin()..self.offset_end()]
+        &self.items[self.offset_range()]
     }
 }
