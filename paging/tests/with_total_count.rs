@@ -33,7 +33,7 @@ fn test_next_page() {
             .page(1)
             .unwrap()
             .next_page()
-            .map(|x| x.get()),
+            .map(|x| x.curr_page.get()),
         Some(2)
     );
 
@@ -59,7 +59,7 @@ fn test_prev_page() {
             .page(3)
             .unwrap()
             .prev_page()
-            .map(|x| x.get()),
+            .map(|x| x.curr_page.get()),
         Some(2)
     );
 
@@ -68,7 +68,7 @@ fn test_prev_page() {
             .page(4)
             .unwrap()
             .prev_page()
-            .map(|x| x.get()),
+            .map(|x| x.curr_page.get()),
         Some(3)
     );
 }

@@ -4,32 +4,28 @@ use core::{
     ops::{Deref, Range},
 };
 
+use crate::paginator::Paginator;
+
 //
 pub const FIRST_PAGE: usize = 1;
 
 //
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Page {
-    total_count: usize,
-    per_page: NonZeroUsize,
-    total_pages: usize,
+pub struct Page<'a> {
+    paginator: &'a Paginator,
     //
-    curr_page: NonZeroUsize,
+    pub curr_page: NonZeroUsize,
 }
 
-impl Page {
+impl<'a> Page<'a> {
     pub(crate) fn new(
-        total_count: usize,
-        per_page: NonZeroUsize,
-        total_pages: usize,
+        paginator: &'a Paginator,
         //
         curr_page: NonZeroUsize,
     ) -> Self {
         Self {
-            total_count,
-            per_page,
-            total_pages,
+            paginator,
             //
             curr_page,
         }
@@ -40,31 +36,27 @@ impl Page {
     }
 
     pub fn is_last_page(&self) -> bool {
-        self.curr_page.get() == self.total_pages
+        self.curr_page.get() == self.paginator.total_pages()
     }
 
-    pub fn next_page(&self) -> Option<NonZeroUsize> {
+    pub fn next_page(&self) -> Option<Self> {
         if self.is_last_page() {
             None
         } else {
-            Some(unsafe { NonZeroUsize::new_unchecked(self.curr_page.get() + 1) })
+            self.paginator.page(self.curr_page.get() + 1)
         }
     }
 
-    pub fn prev_page(&self) -> Option<NonZeroUsize> {
+    pub fn prev_page(&self) -> Option<Self> {
         if self.is_first_page() {
             None
         } else {
-            Some(unsafe { NonZeroUsize::new_unchecked(self.curr_page.get() - 1) })
+            self.paginator.page(self.curr_page.get() - 1)
         }
     }
 
-    pub fn curr_page(&self) -> NonZeroUsize {
-        self.curr_page
-    }
-
     pub fn limit_value(&self) -> NonZeroUsize {
-        self.per_page
+        self.paginator.per_page()
     }
 
     pub fn offset_value(&self) -> usize {
@@ -72,37 +64,37 @@ impl Page {
     }
 
     pub fn offset_range(&self) -> Range<usize> {
-        let start = (self.curr_page().get() - 1) * self.limit_value().get();
+        let start = (self.curr_page.get() - 1) * self.limit_value().get();
         let end = min(
-            self.curr_page().get() * self.limit_value().get(),
-            self.total_count,
+            self.curr_page.get() * self.limit_value().get(),
+            self.paginator.total_count,
         );
         Range { start, end }
     }
 }
 
 //
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct SlicePage<'a, T> {
-    all_items: &'a [T],
-    pub page: Page,
+pub struct SlicePage<'a, 'i, T> {
+    all_items: &'i [T],
+    pub page: Page<'a>,
 }
 
-impl<'a, T> Deref for SlicePage<'a, T> {
-    type Target = Page;
+impl<'a, 'i, T> Deref for SlicePage<'a, 'i, T> {
+    type Target = Page<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.page
     }
 }
 
-impl<'a, T> SlicePage<'a, T> {
-    pub(crate) fn new(all_items: &'a [T], page: Page) -> Self {
+impl<'a, 'i, T> SlicePage<'a, 'i, T> {
+    pub(crate) fn new(all_items: &'i [T], page: Page<'a>) -> Self {
         Self { all_items, page }
     }
 
-    pub fn items(&self) -> &'a [T] {
+    pub fn items(&self) -> &'i [T] {
         &self.all_items[self.offset_range()]
     }
 }

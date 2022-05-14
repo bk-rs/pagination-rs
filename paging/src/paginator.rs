@@ -9,7 +9,7 @@ use crate::{
 pub const DEFAULT_PER_PAGE: usize = 25;
 
 //
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Paginator {
     pub total_count: usize,
@@ -35,7 +35,7 @@ impl Paginator {
         (self.total_count as f64 / self.per_page().get() as f64).ceil() as usize
     }
 
-    pub fn page(&self, n: usize) -> Option<Page> {
+    pub fn page(&self, n: usize) -> Option<Page<'_>> {
         let curr_page = NonZeroUsize::new(n)
             .unwrap_or_else(|| unsafe { NonZeroUsize::new_unchecked(FIRST_PAGE) });
 
@@ -46,28 +46,23 @@ impl Paginator {
             return None;
         }
 
-        Some(Page::new(
-            self.total_count,
-            self.per_page(),
-            total_pages,
-            curr_page,
-        ))
+        Some(Page::new(self, curr_page))
     }
 
-    pub fn pages(&self) -> Pages {
-        Pages::new(self.total_count, self.per_page(), self.total_pages())
+    pub fn pages(&self) -> Pages<'_> {
+        Pages::new(self)
     }
 }
 
 //
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct SlicePaginator<'a, T> {
-    all_items: &'a [T],
+pub struct SlicePaginator<'i, T> {
+    all_items: &'i [T],
     pub paginator: Paginator,
 }
 
-impl<'a, T> Deref for SlicePaginator<'a, T> {
+impl<'i, T> Deref for SlicePaginator<'i, T> {
     type Target = Paginator;
 
     fn deref(&self) -> &Self::Target {
@@ -75,8 +70,8 @@ impl<'a, T> Deref for SlicePaginator<'a, T> {
     }
 }
 
-impl<'a, T> SlicePaginator<'a, T> {
-    pub fn new(all_items: &'a [T], per_page: impl Into<Option<usize>>) -> Self {
+impl<'i, T> SlicePaginator<'i, T> {
+    pub fn new(all_items: &'i [T], per_page: impl Into<Option<usize>>) -> Self {
         let per_page = per_page.into();
 
         Self {
@@ -85,7 +80,7 @@ impl<'a, T> SlicePaginator<'a, T> {
         }
     }
 
-    pub fn page(&self, n: usize) -> Option<SlicePage<'a, T>> {
+    pub fn page(&self, n: usize) -> Option<SlicePage<'_, 'i, T>> {
         self.paginator
             .page(n)
             .map(|x| SlicePage::new(self.all_items, x))
