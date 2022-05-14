@@ -1,8 +1,9 @@
-use core::num::NonZeroUsize;
+use core::{num::NonZeroUsize, ops::Deref};
+
+use crate::page::{Page, FIRST_PAGE};
 
 //
 pub const DEFAULT_PER_PAGE: usize = 25;
-pub const FIRST_PAGE: usize = 1;
 
 //
 #[derive(Debug, Clone)]
@@ -16,7 +17,7 @@ impl Paginator {
     pub fn new(total_count: usize, per_page: Option<usize>) -> Self {
         Self {
             total_count,
-            per_page: per_page.and_then(|x| NonZeroUsize::new(x)),
+            per_page: per_page.and_then(NonZeroUsize::new),
         }
     }
 
@@ -33,56 +34,43 @@ impl Paginator {
         let curr_page = NonZeroUsize::new(n)
             .unwrap_or_else(|| unsafe { NonZeroUsize::new_unchecked(FIRST_PAGE) });
 
+        let total_pages = self.total_pages();
+
         // out_of_range
-        if curr_page.get() > self.total_pages() {
+        if curr_page.get() > total_pages {
             return None;
         }
 
-        Some(Page {
-            total_count: self.total_count,
-            per_page: self.per_page(),
-            total_pages: self.total_pages(),
+        Some(Page::new(
             curr_page,
-        })
+            self.total_count,
+            self.per_page(),
+            total_pages,
+        ))
     }
 }
 
 //
 #[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct Page {
-    pub total_count: usize,
-    per_page: NonZeroUsize,
-    total_pages: usize,
-    pub curr_page: NonZeroUsize,
+pub struct SlicePaginator<'a, T> {
+    pub items: &'a [T],
+    pub paginator: Paginator,
 }
 
-impl Page {
-    pub fn is_first_page(&self) -> bool {
-        self.curr_page.get() == FIRST_PAGE
-    }
+impl<'a, T> Deref for SlicePaginator<'a, T> {
+    type Target = Paginator;
 
-    pub fn is_last_page(&self) -> bool {
-        self.curr_page.get() == self.total_pages
+    fn deref(&self) -> &Self::Target {
+        &self.paginator
     }
+}
 
-    pub fn next_page(&self) -> Option<NonZeroUsize> {
-        if self.is_last_page() {
-            None
-        } else {
-            Some(unsafe { NonZeroUsize::new_unchecked(self.curr_page.get() + 1) })
+impl<'a, T> SlicePaginator<'a, T> {
+    pub fn new(items: &'a [T], total_count: usize, per_page: Option<usize>) -> Self {
+        Self {
+            items,
+            paginator: Paginator::new(total_count, per_page),
         }
-    }
-
-    pub fn prev_page(&self) -> Option<NonZeroUsize> {
-        if self.is_first_page() {
-            None
-        } else {
-            Some(unsafe { NonZeroUsize::new_unchecked(self.curr_page.get() - 1) })
-        }
-    }
-
-    pub fn limit_value(&self) -> usize {
-        self.per_page.get()
     }
 }
