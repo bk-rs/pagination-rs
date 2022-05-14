@@ -1,4 +1,4 @@
-use core::{cmp::min, num::NonZeroUsize};
+use core::{cmp::min, num::NonZeroUsize, ops::Deref};
 
 //
 pub const FIRST_PAGE: usize = 1;
@@ -29,9 +29,7 @@ impl Page {
             total_pages,
         }
     }
-}
 
-impl Page {
     pub fn is_first_page(&self) -> bool {
         self.curr_page.get() == FIRST_PAGE
     }
@@ -64,14 +62,44 @@ impl Page {
         self.per_page
     }
 
-    pub fn offset_begin(&self) -> usize {
+    pub fn offset_value(&self) -> usize {
+        self.offset_begin()
+    }
+
+    pub(crate) fn offset_begin(&self) -> usize {
         (self.curr_page().get() - 1) * self.limit_value().get()
     }
 
-    pub fn offset_end(&self) -> usize {
+    pub(crate) fn offset_end(&self) -> usize {
         min(
             self.curr_page().get() * self.limit_value().get(),
             self.total_count,
         )
+    }
+}
+
+//
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub struct SlicePage<'a, T> {
+    items: &'a [T],
+    pub page: Page,
+}
+
+impl<'a, T> Deref for SlicePage<'a, T> {
+    type Target = Page;
+
+    fn deref(&self) -> &Self::Target {
+        &self.page
+    }
+}
+
+impl<'a, T> SlicePage<'a, T> {
+    pub(crate) fn new(items: &'a [T], page: Page) -> Self {
+        Self { items, page }
+    }
+
+    pub fn items(&self) -> &'a [T] {
+        &self.items[self.offset_begin()..self.offset_end()]
     }
 }

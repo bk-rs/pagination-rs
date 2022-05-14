@@ -1,6 +1,6 @@
 use core::{num::NonZeroUsize, ops::Deref};
 
-use crate::page::{Page, FIRST_PAGE};
+use crate::page::{Page, SlicePage, FIRST_PAGE};
 
 //
 pub const DEFAULT_PER_PAGE: usize = 25;
@@ -54,7 +54,7 @@ impl Paginator {
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct SlicePaginator<'a, T> {
-    pub items: &'a [T],
+    items: &'a [T],
     pub paginator: Paginator,
 }
 
@@ -67,10 +67,16 @@ impl<'a, T> Deref for SlicePaginator<'a, T> {
 }
 
 impl<'a, T> SlicePaginator<'a, T> {
-    pub fn new(items: &'a [T], total_count: usize, per_page: Option<usize>) -> Self {
+    pub fn new(items: &'a [T], per_page: Option<usize>) -> Self {
         Self {
             items,
-            paginator: Paginator::new(total_count, per_page),
+            paginator: Paginator::new(items.len(), per_page),
         }
+    }
+
+    pub fn page(&self, n: usize) -> Option<SlicePage<'a, T>> {
+        self.paginator
+            .page(n)
+            .map(|x| SlicePage::new(self.items, x))
     }
 }
