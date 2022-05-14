@@ -1,0 +1,15 @@
+[package]
+name = "paging"
+version = "0.0.0"
+authors = ["vkill <vkill.net@gmail.com>"]
+edition = "2021"
+description = "Paginator"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bk-rs/pagination-rs"
+homepage = "https://github.com/bk-rs/pagination-rs"
+documentation = "https://docs.rs/paging"
+keywords = []
+categories = []
+readme = "README.md"
+
+[dependencies]
