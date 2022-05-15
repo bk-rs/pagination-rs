@@ -2,7 +2,7 @@ use core::{num::NonZeroUsize, ops::Deref};
 
 use crate::{
     page::{Page, SlicePage, FIRST_PAGE},
-    pages::Pages,
+    pages::{Pages, SlicePages},
 };
 
 //
@@ -35,21 +35,19 @@ impl Paginator {
         (self.total_count as f64 / self.per_page().get() as f64).ceil() as usize
     }
 
-    pub fn page(&self, n: usize) -> Option<Page<'_>> {
-        let curr_page = NonZeroUsize::new(n)
+    pub fn page(&self, value: usize) -> Option<Page> {
+        let page_value = NonZeroUsize::new(value)
             .unwrap_or_else(|| unsafe { NonZeroUsize::new_unchecked(FIRST_PAGE) });
 
-        let total_pages = self.total_pages();
-
         // out_of_range
-        if curr_page.get() > total_pages {
+        if page_value.get() > self.total_pages() {
             return None;
         }
 
-        Some(Page::new(self, curr_page))
+        Some(Page::new(*self, page_value))
     }
 
-    pub fn pages(&self) -> Pages<'_> {
+    pub fn pages(self) -> Pages {
         Pages::new(self)
     }
 }
@@ -59,7 +57,7 @@ impl Paginator {
 #[non_exhaustive]
 pub struct SlicePaginator<'i, T> {
     all_items: &'i [T],
-    pub paginator: Paginator,
+    paginator: Paginator,
 }
 
 impl<'i, T> Deref for SlicePaginator<'i, T> {
@@ -80,9 +78,14 @@ impl<'i, T> SlicePaginator<'i, T> {
         }
     }
 
-    pub fn page(&self, n: usize) -> Option<SlicePage<'_, 'i, T>> {
+    pub fn page(&self, n: usize) -> Option<SlicePage<'i, T>> {
         self.paginator
             .page(n)
             .map(|x| SlicePage::new(self.all_items, x))
+    }
+
+    pub fn pages(self) -> SlicePages<'i, T> {
+        let pages = self.paginator.pages();
+        SlicePages::new(self.all_items, pages)
     }
 }

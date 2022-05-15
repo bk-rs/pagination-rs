@@ -12,38 +12,40 @@ pub const FIRST_PAGE: usize = 1;
 //
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Page<'a> {
-    paginator: &'a Paginator,
-    //
-    pub curr_page: NonZeroUsize,
+pub struct Page {
+    paginator: Paginator,
+    page_value: NonZeroUsize,
 }
 
-impl<'a> Page<'a> {
-    pub(crate) fn new(
-        paginator: &'a Paginator,
-        //
-        curr_page: NonZeroUsize,
-    ) -> Self {
+impl Deref for Page {
+    type Target = Paginator;
+
+    fn deref(&self) -> &Self::Target {
+        &self.paginator
+    }
+}
+
+impl Page {
+    pub(crate) fn new(paginator: Paginator, page_value: NonZeroUsize) -> Self {
         Self {
             paginator,
-            //
-            curr_page,
+            page_value,
         }
     }
 
     pub fn is_first_page(&self) -> bool {
-        self.curr_page.get() == FIRST_PAGE
+        self.page_value.get() == FIRST_PAGE
     }
 
     pub fn is_last_page(&self) -> bool {
-        self.curr_page.get() == self.paginator.total_pages()
+        self.page_value.get() == self.paginator.total_pages()
     }
 
     pub fn next_page(&self) -> Option<Self> {
         if self.is_last_page() {
             None
         } else {
-            self.paginator.page(self.curr_page.get() + 1)
+            self.paginator.page(self.page_value.get() + 1)
         }
     }
 
@@ -51,8 +53,12 @@ impl<'a> Page<'a> {
         if self.is_first_page() {
             None
         } else {
-            self.paginator.page(self.curr_page.get() - 1)
+            self.paginator.page(self.page_value.get() - 1)
         }
+    }
+
+    pub fn page_value(&self) -> NonZeroUsize {
+        self.page_value
     }
 
     pub fn limit_value(&self) -> NonZeroUsize {
@@ -64,9 +70,9 @@ impl<'a> Page<'a> {
     }
 
     pub fn offset_range(&self) -> Range<usize> {
-        let start = (self.curr_page.get() - 1) * self.limit_value().get();
+        let start = (self.page_value.get() - 1) * self.limit_value().get();
         let end = min(
-            self.curr_page.get() * self.limit_value().get(),
+            self.page_value.get() * self.limit_value().get(),
             self.paginator.total_count,
         );
         Range { start, end }
@@ -76,21 +82,21 @@ impl<'a> Page<'a> {
 //
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct SlicePage<'a, 'i, T> {
+pub struct SlicePage<'i, T> {
     all_items: &'i [T],
-    pub page: Page<'a>,
+    page: Page,
 }
 
-impl<'a, 'i, T> Deref for SlicePage<'a, 'i, T> {
-    type Target = Page<'a>;
+impl<'i, T> Deref for SlicePage<'i, T> {
+    type Target = Page;
 
     fn deref(&self) -> &Self::Target {
         &self.page
     }
 }
 
-impl<'a, 'i, T> SlicePage<'a, 'i, T> {
-    pub(crate) fn new(all_items: &'i [T], page: Page<'a>) -> Self {
+impl<'i, T> SlicePage<'i, T> {
+    pub(crate) fn new(all_items: &'i [T], page: Page) -> Self {
         Self { all_items, page }
     }
 

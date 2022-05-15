@@ -1,21 +1,31 @@
+use core::ops::Deref;
+
 use crate::{
-    page::{Page, FIRST_PAGE},
+    page::{Page, SlicePage, FIRST_PAGE},
     paginator::Paginator,
 };
 
 //
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Pages<'a> {
-    paginator: &'a Paginator,
+pub struct Pages {
+    paginator: Paginator,
     //
     finished: bool,
-    curr_front: Option<Page<'a>>,
-    curr_back: Option<Page<'a>>,
+    curr_front: Option<Page>,
+    curr_back: Option<Page>,
 }
 
-impl<'a> Pages<'a> {
-    pub(crate) fn new(paginator: &'a Paginator) -> Self {
+impl Deref for Pages {
+    type Target = Paginator;
+
+    fn deref(&self) -> &Self::Target {
+        &self.paginator
+    }
+}
+
+impl Pages {
+    pub(crate) fn new(paginator: Paginator) -> Self {
         Self {
             paginator,
             //
@@ -26,8 +36,8 @@ impl<'a> Pages<'a> {
     }
 }
 
-impl<'a> Iterator for Pages<'a> {
-    type Item = Page<'a>;
+impl Iterator for Pages {
+    type Item = Page;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.finished {
@@ -47,7 +57,7 @@ impl<'a> Iterator for Pages<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for Pages<'a> {
+impl DoubleEndedIterator for Pages {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.finished {
             return None;
@@ -63,5 +73,45 @@ impl<'a> DoubleEndedIterator for Pages<'a> {
         }
         self.curr_back = prev.to_owned();
         prev
+    }
+}
+
+//
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct SlicePages<'i, T> {
+    all_items: &'i [T],
+    pages: Pages,
+}
+
+impl<'i, T> Deref for SlicePages<'i, T> {
+    type Target = Pages;
+
+    fn deref(&self) -> &Self::Target {
+        &self.pages
+    }
+}
+
+impl<'i, T> SlicePages<'i, T> {
+    pub(crate) fn new(all_items: &'i [T], pages: Pages) -> Self {
+        Self { all_items, pages }
+    }
+}
+
+impl<'i, T> Iterator for SlicePages<'i, T> {
+    type Item = SlicePage<'i, T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.pages
+            .next()
+            .map(|page| SlicePage::new(self.all_items, page))
+    }
+}
+
+impl<'i, T> DoubleEndedIterator for SlicePages<'i, T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.pages
+            .next_back()
+            .map(|page| SlicePage::new(self.all_items, page))
     }
 }
